@@ -1,0 +1,297 @@
+%%%%%%%%%%%%%% DFC and Metastability Measures %%%%%%%%%%%%
+%%%%%%% Author: Rajanikant Panda (Note: this code adopted from Prof. Gustavo Deco
+%%%%%%% original code)
+%%%%%%% Date of Development: 1st May 2017
+%%%%%%% Date of Modification: 10th August 2021
+%%%%%%% Supervised: Gustavo Deco, Steven Laureys and Jitka Annen
+%%%%%%% Reference papers:
+%%%%%%% 1. Deco, G., Kringelbach, M. L., Jirsa, V. K., & Ritter, P. (2017). The dynamics of resting fluctuations in the brain: metastability and its dynamical cortical core. Scientific reports, 7(1), 1-14.
+%%%%%%% 2. Panda, R., Thibaut, A., Lopez-Gonzalez, A., Escrichs, A., Bahri, M. A., Hillebrand, A., ... laureys, S., Annen, J. & Tewarie, P. (2021). Disruption in structural-functional network repertoire and time resolved subcortical-frontoparietal connectivity in disorders of consciousness. bioRxiv.
+%%%%%%%%%%%%%%%%%%%
+
+clc
+clear
+%Load the Data
+%% USED
+Food_data = load('/Users/yillysaurus/Downloads/data/Food_data.mat');
+Food_data=Food_data.ts_data; % Food_data = num2cell(Cards_data,[2,3])';
+for i=1:size(Food_data,2)
+    Food_data{i} = squeeze(Food_data{1,i});
+end
+
+%% USED
+Cards_data = load('/Users/yillysaurus/Downloads/data/Cards_data.mat');
+Cards_data=Cards_data.ts_data; % Food_data = num2cell(Cards_data,[2,3])';
+for i=1:size(Cards_data,2)
+    Cards_data{i} = squeeze(Cards_data{1,i});
+end
+%% USED
+Discount_data = load('/Users/yillysaurus/Downloads/data/Discount_data.mat');
+Discount_data=Discount_data.ts_data; %Discount_data = num2cell(Discount_data,[2,3])';
+for i=1:size(Discount_data,2)
+    Discount_data{i} = squeeze(Discount_data{1,i});
+end
+clear i
+%% For Whole Brain Network -- USED
+TR=2 % Specify your TR in Sec
+
+[Food_meta, Food_sync, Food_dFC, Food_dFC_cos, Food_int, Food_seg] = dynamicMetrics_2(Food_data,TR);  
+
+[Cards_meta, Cards_sync, Cards_dFC, Cards_dFC_cos, Cards_int, Cards_seg] = dynamicMetrics_2(Cards_data,TR);  
+
+[Discount_meta, Discount_sync, Discount_dFC, Discount_dFC_cos, Discount_int, Discount_seg] = dynamicMetrics_2(Discount_data,TR);
+
+%% % Ploting metastability Whole Brain -- USED 
+
+Grp_con = ones(length(Discount_data),1); Grp_Fibro_Hyp = 2*(ones(length(Food_data),1));
+Grp = [Grp_con; Grp_Fibro_Hyp]; 
+Grp_meta = [Discount_meta',Food_meta'];
+figure; notBoxPlot(Grp_meta,Grp,0.5,'patch',ones(length(Grp_meta),1));
+title('Whole brain metastability (0.01-0.09Hz)', 'FontSize', 14);
+ylabel('metastability', 'FontSize', 12);
+xticklabels({'Discount','Food'})
+set(gca,'FontSize', 20, 'FontName','Calibri', 'FontWeight', 'bold')
+%%
+
+    figure(); plot(Discount_meta, 'b-o', 'LineWidth',3,'MarkerSize',12); hold on; plot(Cards_meta, 'r--*', 'LineWidth',3,'MarkerSize',12)
+    title('Whole Brain Metastability'); ylabel('Metastability'); xlabel('No of Subjects')
+    set(gca,'FontWeight','bold','FontName', 'Arial','fontsize',18)
+    legend('Discount','')
+
+    [p,h,~,t]=ttest(median(Food_meta,2), median(Discount_meta,2),0.05)    
+%% % Ploting Integration Whole Brain
+Grp_int= [mean(Cards_int,2); mean(Discount_int,2)];
+figure; notBoxPlot(Grp_int,Grp,0.5,'patch',ones(length(Grp_meta),1));
+title('Whole brain Integration (0.01-0.09Hz)', 'FontSize', 14);
+ylabel('Integration', 'FontSize', 12);
+xticklabels({'Baseline','Hypnosis'})
+set(gca,'FontSize', 20, 'FontName','Calibri', 'FontWeight', 'bold')
+
+
+    figure(); plot(mean(Cards_int,2), 'b-o', 'LineWidth',3,'MarkerSize',12); hold on; plot(mean(Discount_int,2), 'r--*', 'LineWidth',3,'MarkerSize',12)
+    title('Whole Brain Integration'); ylabel('Metastability'); xlabel('No of Subjects')
+    set(gca,'FontWeight','bold','FontName', 'Arial','fontsize',18)
+    legend('Baseline','Hypnosis')
+    %%
+    
+    [p,h,~,t]=ttest(Food_int,Discount_int,0.05)
+    
+%% % Ploting Segregation Whole Brain
+Grp_int= [mean(Cards_seg,2); mean(Discount_seg,2)];
+figure; notBoxPlot(Grp_int,Grp,0.5,'patch',ones(length(Grp_meta),1));
+title('Whole brain Segrigation (0.01-0.09Hz)', 'FontSize', 14);
+ylabel('Segrigation', 'FontSize', 12);
+xticklabels({'Baseline','Hypnosis'})
+set(gca,'FontSize', 20, 'FontName','Calibri', 'FontWeight', 'bold')
+
+    figure(); plot(mean(Cards_seg,2), 'b-o', 'LineWidth',3,'MarkerSize',12); hold on; plot(mean(Discount_seg,2), 'r--*', 'LineWidth',3,'MarkerSize',12)
+    title('Whole Brain Segrigation'); ylabel('Segrigation'); xlabel('No of Subjects')
+    set(gca,'FontWeight','bold','FontName', 'Arial','fontsize',18)
+    legend('Baseline','Hypnosis')
+    
+    [p,h,~,t]=ttest(mean(Cards_seg,2), mean(Discount_seg,2),0.05,'right')
+%% % plot mean DF connectivity (Note, this is not the right aproach to show mean DFC)
+% % for i=1:size(Cards_dFC,2)
+% % Cards_dFC_m=mean(Cards_dFC{1,i},3);
+% % Fibro_Hyp_dFC_m=mean(Fibro_Hyp_dFC{1,i},3);
+% % end
+% % figure; subplot(1,2,1);imagesc(Cards_dFC_m); colorbar; caxis([0 0.4]); title('Baseline')
+% % subplot(1,2,2);imagesc(Fibro_Hyp_dFC_m); colorbar; caxis([0 0.4]); title('Hypnosis')
+
+%% %% Plot the mean connectivity
+%Food
+for i=1:size(Food_dFC,2)
+Food_dFC_all(i,:,:) = mean(abs(Food_dFC  {1,i}),3);
+Food_dFC_all1(i,:,:) = mean((Food_dFC_cos  {1,i}),3);
+Food_dFC_all1_median(i,:,:) = median((Food_dFC_cos  {1,i}),3);
+end
+%%
+%Cards
+for i=1:size(Cards_dFC,2)
+Cards_dFC_all(i,:,:) = mean(abs(Cards_dFC {1,i}),3);
+
+Cards_dFC_all1_median(i,:,:) = median((Cards_dFC_cos {1,i}),3);
+end
+%%
+%Discount
+for i=1:size(Discount_dFC,2)
+Fibro_Hyp_dFC_all(i,:,:) = mean(abs(Discount_dFC  {1,i}),3);
+Fibro_Hyp_dFC_all1(i,:,:) = mean((Discount_dFC_cos  {1,i}),3);
+Fibro_Hyp_dFC_all1_median(i,:,:) = median((Discount_dFC_cos  {1,i}),3);
+end
+
+%% USED
+tiledlayout("horizontal")
+figure;
+subplot(3,1,1)
+imagesc(squeeze(median(Food_dFC_all1,1)));caxis([-0.63 0.63])
+title ('a. Mean dFC of Food Task')
+%xlabel('No of ROIs', 'FontName','Calibri', 'FontSize', 14);
+%ylabel('No of ROIs', 'FontName','Calibri', 'FontSize', 14);
+set(gca,'FontSize',14, 'FontName','Calibri', 'FontWeight', 'bold')
+
+subplot(3,1,2)
+imagesc(squeeze(median(Cards_dFC_all1,1)));colorbar;caxis([-0.63 0.63])
+title ('b. Mean dFC of Cards Task')
+%xlabel('No of ROIs', 'FontName','Calibri', 'FontSize', 14);
+%ylabel('No of ROIs', 'FontName','Calibri', 'FontSize', 14);
+set(gca,'FontSize',14, 'FontName','Calibri', 'FontWeight', 'bold')
+
+subplot(3,1,3)
+imagesc(squeeze(median(Discount_dFC_all1,1)));colorbar;caxis([-0.63 0.63])
+title ('c. Mean DFC of Discount Task')
+xlabel('No of ROIs', 'FontName','Calibri', 'FontSize', 14);
+ylabel('No of ROIs', 'FontName','Calibri', 'FontSize', 14);
+set(gca,'FontSize',14, 'FontName','Calibri', 'FontWeight', 'bold')
+
+%% Nodal metastability
+for t=1:345;
+Cards_dFC_cos_s1(t,:) = mean(squeeze(Cards_dFC_cos{1,1}(:,:,t)));
+end
+Cards_dFC_cos_s1_var=std(Cards_dFC_cos_s1,1);
+%%
+%Fibro_Bas_dFC_all1=[Fibro_Bas_dFC_all(1,:,:); Fibro_Hyp_dFC_all(2,:,:); Fibro_Bas_dFC_all(3:10,:,:)];
+%Fibro_Hyp_dFC_all1=[Fibro_Hyp_dFC_all(1,:,:); Fibro_Bas_dFC_all(2,:,:); Fibro_Hyp_dFC_all(3:10,:,:)];
+%Fibro_Bas_dFC_all=Fibro_Bas_dFC_all1;
+%Fibro_Hyp_dFC_all=Fibro_Hyp_dFC_all1;
+
+Fibro_Bas_dFC_all_wb=mean(mean(Fibro_Bas_dFC_all,3),2);
+Fibro_Hyp_dFC_all_wb=mean(mean(Fibro_Hyp_dFC_all,3),2);
+%
+Grp_dFC_wb = [Fibro_Bas_dFC_all_wb; Fibro_Hyp_dFC_all_wb];
+Grp_con = ones(length(Fibro_Bas_dFC_all_wb),1); Grp_mcs = 2*(ones(length(Fibro_Hyp_dFC_all_wb),1));
+Grp = [Grp_con; Grp_mcs];
+figure; notBoxPlot(Grp_dFC_wb,Grp,0.5,'patch',ones(length(Grp_dFC_wb),1)); title ('Whole brain mean dFC')
+xticklabels({'Baseline','Hypnosis'}); set(gca,'FontSize',14, 'FontName','Times New Roman', 'FontWeight', 'bold')
+%%%
+    figure(); plot(Fibro_Bas_dFC_all_wb, 'b-o', 'LineWidth',3,'MarkerSize',12); hold on; plot(Fibro_Hyp_dFC_all_wb, 'r--*', 'LineWidth',3,'MarkerSize',12)
+    title('Whole Brain Mean DFC'); ylabel('Mean DFC'); xlabel('No of Subjects')
+    set(gca,'FontWeight','bold','FontName', 'Arial','fontsize',18)
+    legend('Baseline','Hypnosis')
+    [h,p,~,s] = ttest(Fibro_Bas_dFC_all_wb,Fibro_Hyp_dFC_all_wb)
+    
+%% Nodal Positive Negative connectivity analysis
+%Fibro_Bas_dFC_all1=[Fibro_Bas_dFC_all(1,:,:); Fibro_Hyp_dFC_all(2,:,:); Fibro_Bas_dFC_all(3:end,:,:)];
+%Fibro_Hyp_dFC_all1=[Fibro_Hyp_dFC_all(1,:,:); Fibro_Bas_dFC_all(2,:,:); Fibro_Hyp_dFC_all(3:end,:,:)];
+for s=1:10
+Fibro_Bas_dFC_si=squeeze(Fibro_Bas_dFC_all(s,:,:));
+Fibro_Bas_dFC_si_p=zeros(length(Fibro_Bas_dFC_si));
+Fibro_Bas_dFC_si_n=zeros(length(Fibro_Bas_dFC_si));
+for i=1:length(Fibro_Bas_dFC_si)
+    for j=1:length(Fibro_Bas_dFC_si)
+        if Fibro_Bas_dFC_si(i,j) > 0
+            Fibro_Bas_dFC_si_p(i,j)=Fibro_Bas_dFC_si(i,j);
+        else
+            Fibro_Bas_dFC_si_n(i,j)=Fibro_Bas_dFC_si(i,j);
+        end
+    end
+end
+Fibro_Bas_dFC_si_na=abs(Fibro_Bas_dFC_si_n);
+
+Fibro_Bas_dFC_all_pos(s,:,:)=Fibro_Bas_dFC_si_p;
+Fibro_Bas_dFC_all_neg(s,:,:)=Fibro_Bas_dFC_si_na;
+end
+
+for s=1:10
+Fibro_Hyp_dFC_si=squeeze(Fibro_Hyp_dFC_all(s,:,:));
+Fibro_Hyp_dFC_si_p=zeros(length(Fibro_Hyp_dFC_si));
+Fibro_Hyp_dFC_si_n=zeros(length(Fibro_Hyp_dFC_si));
+for i=1:length(Fibro_Hyp_dFC_si)
+    for j=1:length(Fibro_Hyp_dFC_si)
+        if Fibro_Hyp_dFC_si(i,j) > 0
+            Fibro_Hyp_dFC_si_p(i,j)=Fibro_Hyp_dFC_si(i,j);
+        else
+            Fibro_Hyp_dFC_si_n(i,j)=Fibro_Hyp_dFC_si(i,j);
+        end
+    end
+end
+Fibro_Hyp_dFC_si_na=abs(Fibro_Hyp_dFC_si_n);
+
+Fibro_Hyp_dFC_all_pos(s,:,:)=Fibro_Hyp_dFC_si_p;
+Fibro_Hyp_dFC_all_neg(s,:,:)=Fibro_Hyp_dFC_si_na;
+end
+
+%%
+Fibro_Bas_dFC_all_wb=mean(mean(Fibro_Bas_dFC_all,3),2);
+Fibro_Hyp_dFC_all_wb=mean(mean(Fibro_Hyp_dFC_all,3),2);
+%
+Grp_dFC_wb = [Fibro_Bas_dFC_all_wb; Fibro_Hyp_dFC_all_wb];
+Grp_con = ones(length(Fibro_Bas_dFC_all_wb),1); Grp_mcs = 2*(ones(length(Fibro_Hyp_dFC_all_wb),1));
+Grp = [Grp_con; Grp_mcs];
+figure; notBoxPlot(Grp_dFC_wb,Grp,0.5,'patch',ones(length(Grp_dFC_wb),1)); title ('Whole brain mean dFC')
+xticklabels({'Baseline','Hypnosis'}); set(gca,'FontSize',14, 'FontName','Times New Roman', 'FontWeight', 'bold')
+%%%
+    figure(); plot(Fibro_Bas_dFC_all_wb, 'b-o', 'LineWidth',3,'MarkerSize',12); hold on; plot(Fibro_Hyp_dFC_all_wb, 'r--*', 'LineWidth',3,'MarkerSize',12)
+    title('Whole Brain Mean DFC'); ylabel('Mean DFC'); xlabel('No of Subjects')
+    set(gca,'FontWeight','bold','FontName', 'Arial','fontsize',18)
+    legend('Baseline','Hypnosis')
+    [h,p,~,s] = ttest(Fibro_Bas_dFC_all_wb,Fibro_Hyp_dFC_all_wb)
+    
+%% ttest for ROIs
+Fibro_Bas_dFC_all_roi=mean(abs(Fibro_Bas_dFC_all_pos),3);
+Fibro_Hyp_dFC_all_roi=mean(abs(Fibro_Hyp_dFC_all_pos),3);
+[h,p,~,s] = ttest(Fibro_Hyp_dFC_all_roi,Fibro_Bas_dFC_all_roi,0.01,'right');
+t=s.tstat.*h; figure; plot(t)
+
+%% DFC martrix correlation across time
+close all
+sub=10;
+dFC_b_s=Fibro_Bas_dFC{1,sub};
+dFC_h_s=Discount_dFC{1,sub};
+for i=1:(size(dFC_b_s,3)-1)
+dFC_b_s1=squeeze(dFC_b_s(:,:,i));
+dFC_b_s2=squeeze(dFC_b_s(:,:,i+1));
+dFC_h_s1=squeeze(dFC_h_s(:,:,i));
+dFC_h_s2=squeeze(dFC_h_s(:,:,i+1));
+
+    r_b=corrcoef(dFC_b_s1,dFC_b_s2);
+    r_h=corrcoef(dFC_h_s1,dFC_h_s2);
+    dFC_b_sr(i)=abs(r_b(2));
+    dFC_h_sr(i)=abs(r_h(2));
+end
+plot(dFC_b_sr);hold on; plot(dFC_h_sr)
+%%
+sub=10;
+dFC_b_s=Fibro_Bas_dFC{1,sub};
+dFC_h_s=Discount_dFC{1,sub};
+for i=1:(size(dFC_h_s,3)-1)
+dFC_b_s1=squeeze(dFC_b_s(:,:,i));
+dFC_b_s2=squeeze(dFC_b_s(:,:,i+1));
+dFC_h_s1=squeeze(dFC_h_s(:,:,i));
+dFC_h_s2=squeeze(dFC_h_s(:,:,i+1));
+    dFC_b_sr(i,:)=mean(corr(dFC_b_s1,dFC_b_s2));
+    dFC_h_sr(i,:)=mean(corr(dFC_h_s1,dFC_h_s2));
+end
+figure;imagesc(dFC_b_sr'); colorbar; caxis([-0.15 0.15])
+figure;imagesc(dFC_h_sr'); colorbar; caxis([-0.15 0.15]) 
+
+
+%% USED
+Food_dFC_all1_gp =squeeze(mean(Food_dFC_all1)); 
+Food_dFC_all1_gp_mean= mean(Food_dFC_all1_gp);
+
+Food_dFC_all1_roi =squeeze(median(Food_dFC_all1,2)); 
+[Food_dFC_p, Food_dFC_h,s, Food_dFC_s] =ttest(Food_dFC_all1_roi, 0); 
+Food_dFC_t = Food_dFC_s.tstat;
+create_shennifti(Food_dFC_t,'Food_dFC_t.nii',0)
+save food_dFC_all1_mean_median.mat Food_dFC_all1 Food_dFC_all1_median 
+%% USED
+
+Cards_dFC_all1_gp =squeeze(mean(Cards_dFC_all1)); 
+Cards_dFC_all1_gp_mean= mean(Cards_dFC_all1_gp);
+
+Cards_dFC_all1_roi =squeeze(median(Cards_dFC_all1,2)); 
+[Cards_dFC_p, Cards_dFC_h,s, Cards_dFC_s] =ttest(Cards_dFC_all1_roi, 0); 
+Cards_dFC_t = Cards_dFC_s.tstat;
+create_shennifti(Cards_dFC_t,'Cards_dFC_t.nii',0)
+save cards_dFC_all1_mean_median.mat Cards_dFC_all1 Cards_dFC_all1_median 
+%% USED
+
+Discount_dFC_all1_gp =squeeze(mean(Discount_dFC_all1)); 
+Discount_dFC_all1_gp_mean= mean(Discount_dFC_all1_gp);
+
+Discount_dFC_all1_roi =squeeze(median(Discount_dFC_all1,2)); 
+[Discount_dFC_p, Discount_dFC_h,s, Discount_dFC_s] =ttest(Discount_dFC_all1_roi, 0); 
+Discount_dFC_t = Discount_dFC_s.tstat;
+create_shennifti(Discount_dFC_t,'Discount_dFC_t.nii',0)
+save discount_dFC_all1_mean_median.mat Discount_dFC_all1 Discount_dFC_all1_median 
